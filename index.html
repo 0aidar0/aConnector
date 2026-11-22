@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a0d14">
+<title>MeshDrop — общая папка напрямую между устройствами</title>
+<link rel="stylesheet" href="css/styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230a0d14'/%3E%3Cpath d='M18 24h12l4 5h12v15H18z' fill='%2322d3ee'/%3E%3Cpath d='M32 12v22m0 0l-7-7m7 7l7-7' stroke='%23818cf8' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
+</head>
+<body data-view="connect">
+
+<header class="appbar">
+  <a class="brand" href="./" id="brand" aria-label="MeshDrop">
+    <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true">
+      <rect x="1" y="1" width="46" height="46" rx="13" fill="url(#bg)"/>
+      <path d="M13 20h9l3.4 4H35v12H13z" fill="#0b1220" opacity=".45"/>
+      <path d="M13 19h9l3.4 4H35v12H13z" fill="#67e8f9"/>
+      <path d="M24 9v16m0 0l-5-5m5 5l5-5" stroke="#a5b4fc" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <defs><linearGradient id="bg" x1="0" y1="0" x2="48" y2="48"><stop stop-color="#111827"/><stop offset="1" stop-color="#0b1220"/></linearGradient></defs>
+    </svg>
+    <span class="brand-text">Mesh<strong>Drop</strong></span>
+  </a>
+  <div class="appbar-right">
+    <span class="pill" id="net-status"><i class="dot"></i><span>не подключено</span></span>
+    <button class="icon-btn" id="btn-settings" title="Настройки" aria-label="Настройки">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z"/><path d="M19.4 13.5a7.8 7.8 0 0 0 .05-3l1.7-1.3-1.9-3.3-2 .8a7.7 7.7 0 0 0-2.6-1.5L14.3 3h-3.8l-.4 2.2a7.7 7.7 0 0 0-2.6 1.5l-2-.8-1.9 3.3 1.7 1.3a7.8 7.8 0 0 0 0 3l-1.7 1.3 1.9 3.3 2-.8a7.7 7.7 0 0 0 2.6 1.5l.4 2.2h3.8l.4-2.2a7.7 7.7 0 0 0 2.6-1.5l2 .8 1.9-3.3-1.7-1.3Z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="view-connect" class="view">
+  <section class="hero">
+    <h1>Файлы напрямую.<br><span class="grad">Без сервера.</span></h1>
+    <p class="lead">Соедините два устройства по QR-коду и получите общую папку. Файлы передаются напрямую по WebRTC и хранятся только на ваших устройствах — пока папка есть хотя бы у одного участника, она не пропадает.</p>
+    <ul class="badges">
+      <li>ПК ↔ ПК</li>
+      <li>ПК ↔ телефон</li>
+      <li>телефон ↔ телефон</li>
+      <li>без регистрации</li>
+    </ul>
+  </section>
+
+  <section class="cards">
+    <article class="card" id="card-host">
+      <div class="card-head">
+        <span class="step">1</span>
+        <div>
+          <h2>Создать сессию</h2>
+          <p>Покажите QR-код собеседнику или передайте ему код-приглашение.</p>
+        </div>
+      </div>
+      <button class="btn primary big" id="btn-host">Создать приглашение</button>
+
+      <div class="pair-panel" id="host-panel" hidden>
+        <div class="qr-box" id="host-qr-box">
+          <canvas id="host-qr" width="320" height="320"></canvas>
+          <div class="qr-overlay" id="host-expired" hidden>
+            <strong>Код истёк</strong>
+            <small>Создайте новый приглашение</small>
+          </div>
+        </div>
+        <div class="pin-row">
+          <span class="pin-label">Код сессии</span>
+          <span class="pin" id="host-pin">— — —</span>
+        </div>
+        <div class="timer">
+          <div class="timer-bar"><i id="host-timer-bar"></i></div>
+          <span id="host-timer">2:00</span>
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="btn-host-copy">Копировать код</button>
+          <button class="btn" id="btn-host-scan">Сканировать ответ</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn ghost" id="btn-host-paste">Вставить ответ</button>
+          <button class="btn ghost" id="btn-host-regen">Новый код</button>
+        </div>
+        <details class="code-details">
+          <summary>Текстовый код приглашения</summary>
+          <textarea id="host-code" readonly rows="3" spellcheck="false"></textarea>
+          <button class="btn small" id="btn-host-copy-text">Копировать текст</button>
+        </details>
+      </div>
+    </article>
+
+    <article class="card" id="card-join">
+      <div class="card-head">
+        <span class="step">2</span>
+        <div>
+          <h2>Подключиться</h2>
+          <p>Отсканируйте QR первого устройства или вставьте его код.</p>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn primary big" id="btn-join-scan">Сканировать QR</button>
+        <button class="btn big" id="btn-join-paste">Вставить код</button>
+      </div>
+
+      <div class="pair-panel" id="guest-panel" hidden>
+        <p class="hint">Покажите этот QR первому устройству — оно отсканирует ответ.</p>
+        <div class="qr-box" id="guest-qr-box">
+          <canvas id="guest-qr" width="320" height="320"></canvas>
+          <div class="qr-overlay" id="guest-expired" hidden>
+            <strong>Код истёк</strong>
+            <small>Подключитесь заново</small>
+          </div>
+        </div>
+        <div class="pin-row">
+          <span class="pin-label">Код сессии</span>
+          <span class="pin" id="guest-pin">— — —</span>
+        </div>
+        <div class="timer">
+          <div class="timer-bar"><i id="guest-timer-bar"></i></div>
+          <span id="guest-timer">2:00</span>
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="btn-guest-copy">Копировать ответ</button>
+          <button class="btn ghost" id="btn-guest-cancel">Отмена</button>
+        </div>
+        <details class="code-details">
+          <summary>Текстовый код ответа</summary>
+          <textarea id="guest-code" readonly rows="3" spellcheck="false"></textarea>
+          <button class="btn small" id="btn-guest-copy-text">Копировать текст</button>
+        </details>
+      </div>
+
+      <div class="waiting" id="guest-waiting" hidden>
+        <span class="spinner"></span>
+        <span>Ожидаем подтверждения от первого устройства…</span>
+      </div>
+    </article>
+  </section>
+
+  <section class="how">
+    <h2>Как это работает</h2>
+    <div class="how-grid">
+      <div><span>1</span><h3>Одноразовый код</h3><p>Приглашение живёт 2 минуты. Не успели — сгенерируйте новое. QR и текстовый код содержат параметры соединения.</p></div>
+      <div><span>2</span><h3>Прямой канал</h3><p>Устройства обмениваются данными напрямую по WebRTC. Сервера MeshDrop нет: приложение — это статический сайт.</p></div>
+      <div><span>3</span><h3>Общая папка</h3><p>Всё, что вы добавили, хранится в браузере и автоматически синхронизируется с собеседником при подключении.</p></div>
+    </div>
+    <p class="footnote">6-значный код — отпечаток сессии для сверки: он должен совпадать на обоих экранах. Сам обмен параметрами подключения идёт через QR или текстовый код, потому что без сервера устройствам неоткуда взять адрес друг друга по одному короткому коду. Для работы за NAT может понадобиться TURN-сервер (настраивается в параметрах).</p>
+  </section>
+</main>
+
+<main id="view-session" class="view" hidden>
+  <section class="session-head">
+    <div class="peer-info">
+      <div class="peer-avatar" id="peer-avatar">?</div>
+      <div>
+        <div class="peer-name" id="peer-name">Собеседник</div>
+        <div class="peer-sub" id="peer-sub">соединение…</div>
+      </div>
+    </div>
+    <button class="btn danger ghost" id="btn-disconnect">Отключиться</button>
+  </section>
+
+  <div class="toolbar">
+    <label class="btn primary">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      Файлы
+      <input type="file" id="file-input" multiple hidden>
+    </label>
+    <label class="btn">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      Папка
+      <input type="file" id="dir-input" webkitdirectory directory multiple hidden>
+    </label>
+    <label class="switch" title="Автоматически забирать новые файлы у собеседника">
+      <input type="checkbox" id="autosync" checked>
+      <span class="track"><span class="thumb"></span></span>
+      Автосинхронизация
+    </label>
+    <div class="grow"></div>
+    <span class="storage" id="storage-info"></span>
+  </div>
+
+  <div class="dropzone" id="dropzone">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+    <strong>Перетащите файлы или папки сюда</strong>
+    <span>они появятся в общей папке у обоих устройств</span>
+  </div>
+
+  <div class="list-head">
+    <h2>Общая папка</h2>
+    <span class="count" id="file-count"></span>
+    <div class="grow"></div>
+    <input class="filter" id="filter" type="search" placeholder="Поиск по папке…" autocomplete="off">
+  </div>
+
+  <ul class="file-list" id="file-list"></ul>
+  <div class="empty" id="empty-state" hidden>
+    <p>Папка пока пуста.</p>
+    <p class="muted">Добавьте файлы или папки — они сохранятся здесь и будут доступны собеседнику при подключении.</p>
+  </div>
+
+  <section class="transfers" id="transfers-section" hidden>
+    <h3>Передачи</h3>
+    <ul id="transfer-list"></ul>
+  </section>
+</main>
+
+<footer class="site-foot">
+  <span>MeshDrop · P2P без сервера</span>
+  <span id="foot-note">Данные не покидают ваши устройства</span>
+</footer>
+
+<!-- Модальное окно: вставка кода -->
+<div class="modal" id="modal-paste" hidden>
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3 id="paste-title">Вставьте код</h3>
+      <button class="icon-btn close" data-close="modal-paste" aria-label="Закрыть">✕</button>
+    </div>
+    <p class="modal-hint" id="paste-hint">Вставьте код из буфера обмена или введите его вручную.</p>
+    <textarea id="paste-input" rows="5" spellcheck="false" placeholder="MD1z..."></textarea>
+    <div class="modal-actions">
+      <button class="btn ghost" data-close="modal-paste">Отмена</button>
+      <button class="btn primary" id="paste-apply">Продолжить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно: сканер -->
+<div class="modal" id="modal-scan" hidden>
+  <div class="modal-card scan-card">
+    <div class="modal-head">
+      <h3>Сканировать QR-код</h3>
+      <button class="icon-btn close" id="scan-close" aria-label="Закрыть">✕</button>
+    </div>
+    <div class="scan-stage">
+      <video id="scan-video" playsinline muted></video>
+      <canvas id="scan-canvas" hidden></canvas>
+      <div class="scan-frame"></div>
+    </div>
+    <p class="modal-hint" id="scan-hint">Наведите камеру на QR-код на другом устройстве.</p>
+    <div class="modal-actions wrap">
+      <label class="btn ghost small">
+        Загрузить скриншот
+        <input type="file" id="scan-file" accept="image/*" hidden>
+      </label>
+      <button class="btn ghost small" id="scan-manual">Вставить код вручную</button>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно: настройки -->
+<div class="modal" id="modal-settings" hidden>
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3>Настройки</h3>
+      <button class="icon-btn close" data-close="modal-settings" aria-label="Закрыть">✕</button>
+    </div>
+    <div class="form">
+      <label>Имя устройства
+        <input id="set-name" type="text" maxlength="32" placeholder="Например, Ноутбук">
+      </label>
+      <label>STUN-серверы <small>по одному в строке</small>
+        <textarea id="set-stun" rows="2" spellcheck="false"></textarea>
+      </label>
+      <details class="advanced">
+        <summary>TURN-сервер (если устройства за сложным NAT)</summary>
+        <label>TURN URL <small>turn:host:3478 или turns:host:5349</small>
+          <input id="set-turn-url" type="text" spellcheck="false" placeholder="turn:example.com:3478">
+        </label>
+        <div class="two">
+          <label>Логин <input id="set-turn-user" type="text" autocomplete="off"></label>
+          <label>Пароль <input id="set-turn-pass" type="password" autocomplete="off"></label>
+        </div>
+      </details>
+      <div class="modal-actions between">
+        <button class="btn danger ghost small" id="btn-wipe">Очистить папку и данные</button>
+        <div class="grow"></div>
+        <button class="btn ghost" data-close="modal-settings">Отмена</button>
+        <button class="btn primary" id="settings-save">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно: подтверждение -->
+<div class="modal" id="modal-confirm" hidden>
+  <div class="modal-card small">
+    <div class="modal-head">
+      <h3 id="confirm-title">Подтвердите действие</h3>
+      <button class="icon-btn close" data-close="modal-confirm" aria-label="Закрыть">✕</button>
+    </div>
+    <p class="modal-hint" id="confirm-text"></p>
+    <div class="modal-actions column" id="confirm-actions"></div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script src="js/vendor/qrcode.js"></script>
+<script src="js/vendor/jsQR.js"></script>
+<script src="js/sha256.js"></script>
+<script src="js/store.js"></script>
+<script src="js/net.js"></script>
+<script src="js/qr.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
